@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>PAINSPIRE</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script type="module">
+  import { injectSpeedInsights } from 'https://unpkg.com/@vercel/speed-insights@2.0.0/dist/index.mjs';
+  injectSpeedInsights();
+</script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{background:#0a0000;height:100%;overflow:hidden}
@@ -469,7 +473,7 @@ function vibrate(pattern){
 
 /* ═══════════════════════════════════════
    HUD UPDATE
-═══════════════════════════════════════ */
+═════════���═════════════════════════════ */
 function updateHUD(){
   var needed=G.lvl*1000;
   var prog=G.pain%needed;
