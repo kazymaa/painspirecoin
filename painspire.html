@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PAINSPIRE</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:#0a0000;height:100%;overflow:hidden}
+  body{display:flex;justify-content:center;align-items:flex-start;font-family:'Courier New',monospace}
+
+  #app{
+    background:#0a0000;
+    width:100%;max-width:430px;
+    height:100vh;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+    position:relative;
+    color:#ddd;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-90px) scale(1.5)}}
+  @keyframes drip{0%{opacity:1;transform:translateY(0)}70%{opacity:1;transform:translateY(80px)}100%{opacity:0;transform:translateY(120px)}}
+  @keyframes glowRed{0%,100%{box-shadow:0 0 28px #cc000077,0 0 60px #880000}50%{box-shadow:0 0 55px #ff0000bb,0 0 110px #cc0000}}
+  @keyframes glowRedFast{0%,100%{box-shadow:0 0 35px #cc000099,0 0 70px #990000}50%{box-shadow:0 0 70px #ff0000dd,0 0 140px #dd0000}}
+  @keyframes shakeBtn{0%,100%{transform:rotate(0)}15%{transform:rotate(-5deg) scale(1.05)}35%{transform:rotate(5deg) scale(1.05)}55%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+  @keyframes lvlUp{0%{opacity:0;transform:translate(-50%,-50%) scale(0.3)}45%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7)}}
+  @keyframes screenFlash{0%,100%{opacity:0}40%{opacity:1}}
+  @keyframes rippleOut{0%{transform:scale(0.88);opacity:0.8}100%{transform:scale(2.4);opacity:0}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulseAura{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.6;transform:scale(1.08)}}
+
+  /* ── TOPBAR ── */
+  #topbar{
+    background:#0d0000;
+    padding:12px 16px 0;
+    border-bottom:1px solid #220000;
+    flex-shrink:0;
+  }
+  .tb-row{display:flex;justify-content:space-between;align-items:center}
+  .lvl-badge{font-size:14px;color:#ff3333;letter-spacing:1px;font-weight:700}
+  .next-lbl{font-size:11px;color:#550000;letter-spacing:1px}
+  .xpbar-wrap{height:4px;background:#1a0000;margin-top:7px;border-radius:2px;overflow:hidden}
+  .xpbar{height:100%;background:linear-gradient(90deg,#880000,#ff2222);border-radius:2px;transition:.4s}
+
+  /* ── SCROLL AREA ── */
+  #scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  #scroll-area::-webkit-scrollbar{display:none}
+
+  /* ── PAGES ── */
+  .page{display:none;padding:0 0 16px;animation:fadeIn .22s ease}
+  .page.on{display:block}
+  .sec-hd{font-size:11px;color:#660000;letter-spacing:2px;padding:14px 16px 8px;text-transform:uppercase}
+
+  /* ── MAIN PAGE ── */
+  #main-top{text-align:center;padding:14px 16px 0}
+  .pain-val{font-size:58px;color:#ff2222;font-weight:900;letter-spacing:-2px;line-height:1;text-shadow:0 0 30px #cc000055}
+  .pain-sub{font-size:12px;color:#440000;letter-spacing:4px;margin:3px 0 10px}
+  .stats-row{display:flex;justify-content:center;border-top:1px solid #1a0000;border-bottom:1px solid #1a0000;margin:0 0 0}
+  .stat-col{flex:1;padding:9px 0;border-right:1px solid #1a0000;text-align:center}
+  .stat-col:last-child{border-right:none}
+  .stat-lbl{font-size:11px;color:#440000;letter-spacing:1px}
+  .stat-val{font-size:22px;color:#ff4444;font-weight:700}
+
+  .char-zone{display:flex;justify-content:center;align-items:flex-end;height:148px;position:relative;margin:6px 0 0}
+  .painspire-lbl{font-size:11px;color:#660000;letter-spacing:5px;text-align:center;margin:2px 0 6px}
+
+  /* ── ROUND BUTTON ── */
+  .btn-wrap{display:flex;justify-content:center;padding:0 0 10px}
+  #btn-bleed{
+    width:200px;height:200px;
+    border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#250000,#0d0000);
+    border:3px solid #cc0000;
+    color:#ff4444;
+    font-family:'Courier New',monospace;
+    cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+    position:relative;overflow:hidden;
+    animation:glowRed 2.6s ease-in-out infinite;
+    transition:transform .08s;
+    outline:none;
+    -webkit-appearance:none;appearance:none;
+    touch-action:manipulation;
+  }
+  #btn-bleed:active{transform:scale(0.88)}
+  .btn-ring1{width:160px;height:160px;border-radius:50%;border:1px solid #440000;position:absolute;pointer-events:none}
+  .btn-ring2{width:122px;height:122px;border-radius:50%;border:1px solid #2a0000;position:absolute;pointer-events:none}
+  .btn-drop-ico{width:17px;height:22px;background:#cc0000;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;display:block;box-shadow:0 0 10px #ff000077}
+  .btn-press{font-size:11px;color:#660000;letter-spacing:2px}
+  .btn-main{font-size:15px;font-weight:700;color:#ff3333;letter-spacing:1px}
+  .ripple-ring{position:absolute;width:200px;height:200px;border-radius:50%;border:2px solid #cc0000;pointer-events:none;animation:rippleOut .65s ease-out forwards}
+
+  /* ── ENERGY ── */
+  .energy-row{padding:0 16px}
+  .ebar-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;color:#440000}
+  .ebar-wrap{height:6px;background:#0d0000;border-radius:3px;border:1px solid #1a0000;overflow:hidden}
+  .ebar-fill{height:100%;background:linear-gradient(90deg,#770000,#ff2222);border-radius:3px;transition:.4s}
+
+  /* ── UPGRADE PAGE ── */
+  .upg-card{background:#0f0000;border:1px solid #1f0000;border-radius:10px;padding:13px;margin:0 16px 10px}
+  .upg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .upg-name{font-size:15px;color:#ff6666;font-weight:700}
+  .upg-lv{font-size:11px;color:#660000;background:#0d0000;padding:3px 8px;border-radius:12px;border:1px solid #1a0000}
+  .upg-desc{font-size:12px;color:#3a0000;margin-bottom:6px}
+  .upg-cost{font-size:13px;color:#ff4444;margin-bottom:7px}
+  .upg-bar-wrap{height:4px;background:#0d0000;border-radius:2px;margin-bottom:9px;overflow:hidden}
+  .upg-bar{height:100%;background:linear-gradient(90deg,#770000,#ff2222);border-radius:2px;transition:.3s}
+  .upg-btn{padding:9px 0;width:100%;background:#1a0000;border:1px solid #770000;border-radius:8px;color:#ff4444;font-size:13px;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:1px;touch-action:manipulation}
+  .upg-btn:disabled{opacity:0.22;cursor:default}
+
+  /* ── REWARDS PAGE ── */
+  .rew-card{background:#0f0000;border:1px solid #1f0000;border-radius:10px;padding:14px;margin:0 16px 10px}
+  .rew-title{font-size:15px;color:#ff6666;font-weight:700;margin-bottom:5px}
+  .rew-desc{font-size:12px;color:#3a0000;margin-bottom:9px}
+  .rew-bottom{display:flex;justify-content:space-between;align-items:center}
+  .rew-cost{font-size:14px;color:#ff3333;font-weight:700}
+  .rew-btn{padding:8px 16px;background:#1a0000;border:1px solid #770000;border-radius:8px;color:#ff4444;font-size:12px;cursor:pointer;font-family:'Courier New',monospace;touch-action:manipulation}
+  .rew-btn:disabled{opacity:0.22;cursor:default}
+
+  .ton-card{background:#0a1020;border:1px solid #0033aa;border-radius:10px;padding:14px;margin:0 16px 10px}
+  .ton-title{font-size:14px;color:#4488ff;margin-bottom:6px;font-weight:700}
+  .ton-desc{font-size:12px;color:#1a3366;margin-bottom:10px;line-height:1.6}
+  .ton-addr{font-size:9px;color:#0a2244;word-break:break-all;margin-top:4px}
+  .ton-btn{width:100%;padding:12px;background:#0d1f44;border:1px solid #0055cc;border-radius:8px;color:#4488ff;font-size:13px;font-family:'Courier New',monospace;cursor:pointer;letter-spacing:1px;touch-action:manipulation}
+
+  /* ── DAILY PAGE ── */
+  .daily-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:4px 16px 14px}
+  .day-box{background:#0f0000;border:1px solid #1a0000;border-radius:6px;padding:6px 2px;text-align:center}
+  .day-num{font-size:10px;color:#330000}
+  .day-amt{font-size:9px;color:#440000;margin-top:2px}
+  .day-box.done{border-color:#660000;background:#120000}.day-box.done .day-amt{color:#cc3333}
+  .day-box.today{border-color:#ff0000;background:#1f0000}.day-box.today .day-num,.day-box.today .day-amt{color:#ff4444}
+  .claim-zone{background:#0f0000;border:1px solid #1f0000;border-radius:10px;padding:14px;margin:0 16px}
+  .claim-lbl{font-size:13px;color:#660000;margin-bottom:9px}
+  .claim-btn{width:100%;padding:13px;background:#1f0000;border:2px solid #cc0000;border-radius:8px;color:#ff4444;font-size:14px;font-family:'Courier New',monospace;letter-spacing:1px;cursor:pointer;touch-action:manipulation}
+  .claim-btn:disabled{opacity:0.22;cursor:default}
+
+  /* ── LEADERBOARD ── */
+  .lb-row{display:flex;align-items:center;padding:9px 16px;border-bottom:1px solid #100000}
+  .lb-rank{width:24px;font-size:13px;color:#440000;font-weight:700;text-align:center}
+  .lb-rank.r1{color:#ff2222}.lb-rank.r2{color:#cc4444}.lb-rank.r3{color:#993333}
+  .lb-av{width:32px;height:32px;border-radius:50%;background:#150000;border:1px solid #330000;display:flex;align-items:center;justify-content:center;font-size:12px;color:#cc3333;font-weight:700;margin:0 9px}
+  .lb-name{flex:1;font-size:14px;color:#ccc}.lb-you{color:#ffcc00}
+  .lb-score{font-size:14px;color:#ff3333;font-weight:700}
+
+  /* ── ACCOUNT PAGE ── */
+  .acc-card{background:#0f0000;border:1px solid #1f0000;border-radius:10px;padding:14px;margin:0 16px 12px}
+  .acc-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .acc-av{width:54px;height:54px;border-radius:50%;background:#1f0000;border:2px solid #cc0000;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#ff4444}
+  .acc-name{font-size:17px;color:#ff3333;font-weight:700}
+  .acc-sub{font-size:11px;color:#440000;margin-top:3px}
+  .acc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .as{background:#0a0000;border:1px solid #1a0000;border-radius:7px;padding:9px;text-align:center}
+  .as-l{font-size:10px;color:#330000;letter-spacing:1px}.as-v{font-size:16px;color:#ff3333;font-weight:700}
+  .logout-btn{width:100%;padding:11px;background:none;border:1px solid #1a0000;border-radius:8px;color:#330000;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;margin-top:10px;touch-action:manipulation}
+  .logout-btn:hover{border-color:#770000;color:#cc4444}
+
+  /* ── BOTTOM NAV ── */
+  #bottom-nav{
+    background:#0a0000;
+    border-top:1px solid #1f0000;
+    display:flex;
+    padding:8px 0 max(10px, env(safe-area-inset-bottom));
+    flex-shrink:0;
+  }
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;touch-action:manipulation}
+  .nav-ico{font-size:19px;line-height:1;color:#2a0000;transition:.15s}
+  .nav-lbl{font-size:10px;letter-spacing:1px;color:#2a0000;transition:.15s}
+  .nav-item.on .nav-ico,.nav-item.on .nav-lbl{color:#ff3333}
+
+  /* ── REG OVERLAY ── */
+  #reg-overlay{
+    position:absolute;top:0;left:0;right:0;bottom:0;
+    background:#090000f2;
+    z-index:100;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+  }
+  .reg-inner{width:100%;max-width:340px}
+  .reg-logo{font-size:34px;color:#ff2222;font-weight:900;letter-spacing:4px;text-align:center;text-shadow:0 0 30px #cc000055}
+  .reg-tagline{font-size:11px;color:#440000;letter-spacing:3px;text-align:center;margin:6px 0 24px}
+  .reg-in{
+    width:100%;padding:12px 14px;
+    background:#0f0000;border:1px solid #2a0000;border-radius:8px;
+    color:#ddd;font-family:'Courier New',monospace;font-size:14px;
+    outline:none;transition:.2s;display:block;margin-bottom:12px;
+  }
+  .reg-in:focus{border-color:#cc0000}
+  .reg-btn{
+    width:100%;padding:14px;
+    background:#1f0000;border:2px solid #cc0000;border-radius:8px;
+    color:#ff4444;font-size:15px;font-family:'Courier New',monospace;letter-spacing:1px;
+    cursor:pointer;margin-bottom:10px;touch-action:manipulation;
+  }
+  .tg-btn{
+    width:100%;padding:12px;
+    background:#0d1f3c;border:1px solid #1a4488;border-radius:8px;
+    color:#4488ee;font-size:14px;font-family:'Courier New',monospace;
+    cursor:pointer;letter-spacing:1px;touch-action:manipulation;
+  }
+  .divl{display:flex;align-items:center;gap:8px;margin:12px 0;font-size:11px;color:#1a0000}
+  .divl::before,.divl::after{content:'';flex:1;height:1px;background:#1a0000}
+  .msg-err{background:#150000;color:#ff4466;border:1px solid #330000;border-radius:7px;padding:9px 12px;font-size:12px;margin:0 0 10px;text-align:center}
+  .skip-lnk{display:block;text-align:center;margin-top:12px;font-size:11px;color:#330000;cursor:pointer}
+
+  /* ── FLOATING ELEMENTS ── */
+  .float-el{position:absolute;pointer-events:none;animation:floatUp .9s ease-out forwards;font-family:'Courier New',monospace;font-weight:700;z-index:20;font-size:17px;color:#ff3333}
+  .drip-el{position:absolute;pointer-events:none;animation:drip 1.15s ease-in forwards;z-index:10;border-radius:50% 50% 50% 50%/62% 62% 38% 38%}
+  .flash-el{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:15;animation:screenFlash .42s ease forwards}
+  .lvlup-el{
+    position:absolute;top:40%;left:50%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    animation:lvlUp 1.5s ease forwards;
+    z-index:30;white-space:nowrap;
+    font-family:'Courier New',monospace;font-weight:900;letter-spacing:2px;text-align:center;
+  }
+  .toast-el{
+    position:absolute;bottom:90px;left:50%;
+    transform:translateX(-50%);
+    background:#1a0000;border:1px solid #cc0000;border-radius:8px;
+    padding:9px 18px;font-size:13px;color:#ff4444;
+    white-space:nowrap;z-index:40;
+    animation:fadeIn .2s ease;
+    font-family:'Courier New',monospace;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="tb-row">
+      <span class="lvl-badge" id="lvl-badge">УР. 1 · Перша кров</span>
+      <span class="next-lbl" id="next-lbl">1000 до слід.</span>
+    </div>
+    <div class="xpbar-wrap"><div class="xpbar" id="xpbar" style="width:0%"></div></div>
+  </div>
+
+  <!-- SCROLL AREA -->
+  <div id="scroll-area">
+
+    <!-- MAIN PAGE -->
+    <div id="page-main" class="page on">
+      <div id="main-top">
+        <div class="pain-val" id="pain-val">0</div>
+        <div class="pain-sub">БОЛЬ</div>
+        <div class="stats-row">
+          <div class="stat-col"><div class="stat-lbl">ЗА ТАП</div><div class="stat-val" id="cpc-val">+1</div></div>
+          <div class="stat-col"><div class="stat-lbl">В ЧАС</div><div class="stat-val" id="aps-val">0</div></div>
+        </div>
+      </div>
+      <div class="char-zone"><canvas id="char-cv" width="130" height="145" style="position:absolute;bottom:0"></canvas></div>
+      <div class="painspire-lbl">PAINSPIRE</div>
+      <div class="btn-wrap">
+        <button id="btn-bleed">
+          <div class="btn-ring1"></div>
+          <div class="btn-ring2"></div>
+          <span class="btn-press">НАЖМИ</span>
+          <span class="btn-drop-ico"></span>
+          <span class="btn-main">ПРОЛИТИ КРОВ</span>
+        </button>
+      </div>
+      <div class="energy-row" style="margin-top:10px">
+        <div class="ebar-top">
+          <span id="e-lbl">⚡ 3000 / 3000</span>
+          <span>+3/сек</span>
+        </div>
+        <div class="ebar-wrap"><div class="ebar-fill" id="ebar" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <!-- UPGRADE PAGE -->
+    <div id="page-upgrade" class="page">
+      <div class="sec-hd">Пасивна прокачка</div>
+      <div id="passive-list"></div>
+      <div class="sec-hd">Прокачка за рівні</div>
+      <div id="lvl-upgrades"></div>
+    </div>
+
+    <!-- DAILY PAGE -->
+    <div id="page-daily" class="page">
+      <div class="sec-hd">Щоденна серія</div>
+      <div class="daily-grid" id="daily-grid"></div>
+      <div class="claim-zone">
+        <div class="claim-lbl" id="claim-lbl">Сьогодні: <span style="color:#ff3333">+100</span></div>
+        <button class="claim-btn" id="claim-btn" onclick="claimDaily()">ЗАБРАТИ НАГОРОДУ</button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD PAGE -->
+    <div id="page-lb" class="page">
+      <div class="sec-hd">Топ гравців</div>
+      <div id="lb-list"></div>
+    </div>
+
+    <!-- REWARDS PAGE -->
+    <div id="page-rewards" class="page">
+      <div class="sec-hd">Нагороди за біль</div>
+      <div id="rew-list"></div>
+      <div class="sec-hd">Донат TON</div>
+      <div class="ton-card">
+        <div class="ton-title">★ Купити біль</div>
+        <div class="ton-desc">
+          200 грн → 10 000 болю<br>
+          <span class="ton-addr">UQALjRzVIoom9Bnnm575XmR1G5VAa5lcPv7aADG07AdQLtt2</span>
+        </div>
+        <button class="ton-btn" onclick="donTON()">▶ Задонатити через TON</button>
+      </div>
+    </div>
+
+    <!-- ACCOUNT PAGE -->
+    <div id="page-acc" class="page">
+      <div id="acc-content"></div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- BOTTOM NAV -->
+  <div id="bottom-nav">
+    <div class="nav-item on" id="nav-main" onclick="nav('main',this)">
+      <span class="nav-ico">☠</span><span class="nav-lbl">Кров</span>
+    </div>
+    <div class="nav-item" onclick="nav('upgrade',this)">
+      <span class="nav-ico">↗</span><span class="nav-lbl">Прокачка</span>
+    </div>
+    <div class="nav-item" onclick="nav('daily',this)">
+      <span class="nav-ico">📅</span><span class="nav-lbl">Завдання</span>
+    </div>
+    <div class="nav-item" onclick="nav('lb',this)">
+      <span class="nav-ico">🏆</span><span class="nav-lbl">Топ</span>
+    </div>
+    <div class="nav-item" onclick="nav('rewards',this)">
+      <span class="nav-ico">🎁</span><span class="nav-lbl">Нагороди</span>
+    </div>
+  </div>
+
+  <!-- REGISTRATION OVERLAY -->
+  <div id="reg-overlay">
+    <div class="reg-inner">
+      <div class="reg-logo">PAINSPIRE</div>
+      <div class="reg-tagline">ВІДЧУЙ СПРАВЖНІЙ БІЛЬ</div>
+      <div id="reg-msg"></div>
+      <input class="reg-in" id="reg-name" placeholder="Ім'я гравця (BloodKing)" maxlength="20">
+      <input class="reg-in" id="reg-email" placeholder="Email" type="email">
+      <input class="reg-in" id="reg-pass" placeholder="Пароль (мін. 6 символів)" type="password">
+      <button class="reg-btn" onclick="register()">ПОЧАТИ ШЛЯХ БОЛЮ</button>
+      <div class="divl">або</div>
+      <button class="tg-btn" onclick="regTG()">✈ Увійти через Telegram</button>
+      <span class="skip-lnk" onclick="skipReg()">Пропустити →</span>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+var G={
+  pain:0,lvl:1,cpc:1,aps:0,
+  energy:3000,maxE:3000,
+  user:null,streak:0,lastClaim:null,
+  claimedR:[],pUpgs:{},lUpgs:{}
+};
+
+var NAMES=[
+  "Перша кров","Пробудження","Агресія","Темрява","Лють",
+  "Демон","Хаос","Жах","Бог болю","PAINSPIRE ∞"
+];
+
+var PASSIVE=[
+  {id:"p1",name:"Автоклікер",desc:"Автоматично тапає кожну секунду",maxLvl:20,
+    cost:function(l){return Math.round(500*Math.pow(1.6,l))},
+    eff:function(l){return l+" тап/сек"}},
+  {id:"p2",name:"Кривава аура",desc:"Множить біль за тап",maxLvl:15,
+    cost:function(l){return Math.round(2000*Math.pow(2,l))},
+    eff:function(l){return "×"+(1+l*0.5).toFixed(1)+" до тапу"}},
+  {id:"p3",name:"Відлуння болю",desc:"Шанс подвійного тапу",maxLvl:10,
+    cost:function(l){return Math.round(5000*Math.pow(2.2,l))},
+    eff:function(l){return (l*8)+"% шанс ×2"}}
+];
+
+var LVL_UPG=[
+  {id:"l1",name:"Гострі пазурі",desc:"+3 до тапу",lvlReq:3,bonus:3},
+  {id:"l2",name:"Кровожер",desc:"+8 до тапу",lvlReq:6,bonus:8},
+  {id:"l3",name:"Тінь демона",desc:"+20 до тапу",lvlReq:10,bonus:20},
+  {id:"l4",name:"Нескінченна лють",desc:"+50 до тапу",lvlReq:15,bonus:50}
+];
+
+var REWARDS=[
+  {id:"r1",title:"Знижка 20%",desc:"Промокод на знижку у магазині Painspire",cost:200000},
+  {id:"r2",title:"Приват-доступ",desc:"Закритий канал + ексклюзивні дропи",cost:500000},
+  {id:"r3",title:"Річ з магазину",desc:"Будь-яка річ до ~4000 грн",cost:5000000}
+];
+
+var DAILY=[100,250,500,750,1000,1500,3000];
+
+var LB=[
+  {n:"DARKDROP_UA",s:4821000},{n:"BloodKing",s:2340500},
+  {n:"xXPainXx",s:1870200},{n:"ghost_zero",s:990000},
+  {n:"redveil",s:441000},{n:"nocturnal99",s:312000},{n:"s4int_ua",s:87400}
+];
+
+/* ═══════════════════════════════════════
+   UTILS
+═══════════════════════════════════════ */
+function fmt(n){
+  if(n>=1e6)return(n/1e6).toFixed(2)+"M";
+  if(n>=1000)return(n/1000).toFixed(1)+"K";
+  return Math.round(n)+"";
+}
+
+function load(){
+  try{
+    var d=JSON.parse(localStorage.getItem("painspire_v5")||"{}");
+    if(d.pain!=null)G.pain=d.pain;
+    if(d.lvl)G.lvl=d.lvl;
+    if(d.cpc)G.cpc=d.cpc;
+    if(d.aps)G.aps=d.aps;
+    if(d.energy!=null)G.energy=d.energy;
+    if(d.user)G.user=d.user;
+    if(d.streak)G.streak=d.streak;
+    if(d.lastClaim)G.lastClaim=d.lastClaim;
+    if(d.claimedR)G.claimedR=d.claimedR;
+    if(d.pUpgs)G.pUpgs=d.pUpgs;
+    if(d.lUpgs)G.lUpgs=d.lUpgs;
+  }catch(e){}
+}
+
+function save(){
+  try{localStorage.setItem("painspire_v5",JSON.stringify(G));}catch(e){}
+}
+
+function recalc(){
+  var base=1;
+  LVL_UPG.forEach(function(u){if(G.lUpgs[u.id])base+=u.bonus;});
+  var mult=1+(G.pUpgs["p2"]||0)*0.5;
+  G.cpc=Math.ceil(G.lvl*1.5*mult+base-1);
+  G.aps=G.pUpgs["p1"]||0;
+}
+
+/* ═══════════════════════════════════════
+   HAPTIC / VIBRATION
+═══════════════════════════════════════ */
+function vibrate(pattern){
+  try{
+    // Telegram Mini App haptic
+    var tg=window.Telegram&&window.Telegram.WebApp;
+    if(tg&&tg.HapticFeedback){
+      if(G.lvl>=8){
+        tg.HapticFeedback.impactOccurred("heavy");
+      } else if(G.lvl>=4){
+        tg.HapticFeedback.impactOccurred("medium");
+      } else {
+        tg.HapticFeedback.impactOccurred("light");
+      }
+    }
+    // Native browser vibration fallback
+    if(navigator.vibrate){
+      navigator.vibrate(pattern||20);
+    }
+  }catch(e){}
+}
+
+/* ═══════════════════════════════════════
+   HUD UPDATE
+═══════════════════════════════════════ */
+function updateHUD(){
+  var needed=G.lvl*1000;
+  var prog=G.pain%needed;
+  document.getElementById("pain-val").textContent=fmt(G.pain);
+  document.getElementById("cpc-val").textContent="+"+G.cpc;
+  document.getElementById("aps-val").textContent=G.aps;
+  var name=NAMES[Math.min(G.lvl-1,NAMES.length-1)];
+  document.getElementById("lvl-badge").textContent="УР. "+G.lvl+" · "+name;
+  document.getElementById("next-lbl").textContent=fmt(needed-prog)+" до слід.";
+  document.getElementById("xpbar").style.width=(prog/needed*100)+"%";
+  document.getElementById("e-lbl").textContent="⚡ "+Math.round(G.energy)+" / "+G.maxE;
+  document.getElementById("ebar").style.width=(G.energy/G.maxE*100)+"%";
+  // Update button glow speed by level
+  var btn=document.getElementById("btn-bleed");
+  if(G.lvl>=7){
+    btn.style.animationName="glowRedFast";
+    btn.style.animationDuration="1.2s";
+  } else if(G.lvl>=4){
+    btn.style.animationName="glowRed";
+    btn.style.animationDuration="2s";
+  } else {
+    btn.style.animationName="glowRed";
+    btn.style.animationDuration="2.6s";
+  }
+  drawChar();
+}
+
+/* ═══════════════════════════════════════
+   BLEED (TAP)
+═══════════════════════════════════════ */
+function bleed(e){
+  if(G.energy<1){toast("Немає енергії! Зачекай...");return;}
+  vibrate(G.lvl>=5?[22,8,22]:20);
+
+  var p3=G.pUpgs["p3"]||0;
+  var double=(Math.random()<p3*0.08);
+  var gained=G.cpc*(double?2:1);
+  G.pain+=gained;
+  G.energy=Math.max(0,G.energy-1);
+
+  // Level up loop
+  var lvledUp=false;
+  while(G.pain>=G.lvl*1000){
+    G.pain-=G.lvl*1000;
+    G.lvl++;
+    lvledUp=true;
+    showLvlUp();
+    vibrate([30,12,30,12,50]);
+  }
+
+  recalc();
+  spawnDrips(e);
+  spawnFloat(e,double?"×2 +"+gained:"+"+gained);
+  spawnRipple();
+  if(G.lvl>=3&&Math.random()<0.35) shakeBtn();
+
+  updateHUD();
+  save();
+}
+
+/* ═══════════════════════════════════════
+   VISUAL FX
+═══════════════════════════════════════ */
+function spawnRipple(){
+  var btn=document.getElementById("btn-bleed");
+  var r=document.createElement("div");
+  r.className="ripple-ring";
+  btn.appendChild(r);
+  setTimeout(function(){if(r.parentNode)r.remove();},680);
+}
+
+function spawnDrips(e){
+  var app=document.getElementById("app");
+  var rect=app.getBoundingClientRect();
+  var count=Math.min(2+Math.floor(G.lvl/2),14);
+  var cx=e?(e.touches?e.touches[0].clientX:e.clientX)-rect.left:100;
+  var cy=e?(e.touches?e.touches[0].clientY:e.clientY)-rect.top:250;
+  var cols=["#cc0000","#aa0000","#ff2233","#880000","#ee1122","#dd0011"];
+  for(var i=0;i<count;i++){
+    var d=document.createElement("div");
+    d.className="drip-el";
+    var sz=5+Math.random()*8;
+    d.style.width=sz+"px";
+    d.style.height=(sz*1.55)+"px";
+    d.style.background=cols[Math.floor(Math.random()*cols.length)];
+    d.style.left=(cx+Math.random()*50-25)+"px";
+    d.style.top=(cy-10)+"px";
+    app.appendChild(d);
+    (function(el){setTimeout(function(){if(el.parentNode)el.remove();},1200);})(d);
+  }
+  if(G.lvl>=6){
+    var fl=document.createElement("div");
+    fl.className="flash-el";
+    fl.style.background="rgba(200,0,0,"+(0.05+G.lvl*0.008)+")";
+    app.appendChild(fl);
+    setTimeout(function(){if(fl.parentNode)fl.remove();},440);
+  }
+}
+
+function spawnFloat(e,txt){
+  var app=document.getElementById("app");
+  var rect=app.getBoundingClientRect();
+  var cx=e?(e.touches?e.touches[0].clientX:e.clientX)-rect.left:100;
+  var cy=e?(e.touches?e.touches[0].clientY:e.clientY)-rect.top:250;
+  var el=document.createElement("div");
+  el.className="float-el";
+  el.textContent=txt;
+  el.style.left=(cx-16)+"px";
+  el.style.top=(cy-30)+"px";
+  el.style.fontSize=Math.min(15+Math.floor(G.lvl/3),24)+"px";
+  app.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.remove();},920);
+}
+
+function showLvlUp(){
+  var app=document.getElementById("app");
+  var lvlColors=["#ff5555","#ff3333","#ff1111","#dd0000","#cc0000"];
+  var el=document.createElement("div");
+  el.className="lvlup-el";
+  el.style.color=lvlColors[Math.min(Math.floor(G.lvl/3),4)];
+  el.style.fontSize=Math.min(16+G.lvl,32)+"px";
+  el.style.textShadow="0 0 20px "+lvlColors[Math.min(Math.floor(G.lvl/3),4)];
+  el.textContent="УР. "+G.lvl+" — "+NAMES[Math.min(G.lvl-1,NAMES.length-1)]+"!";
+  app.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.remove();},1600);
+  var fl=document.createElement("div");
+  fl.className="flash-el";
+  fl.style.background="rgba(200,0,0,0.18)";
+  app.appendChild(fl);
+  setTimeout(function(){if(fl.parentNode)fl.remove();},450);
+}
+
+function shakeBtn(){
+  var b=document.getElementById("btn-bleed");
+  b.style.animation="shakeBtn .38s ease";
+  setTimeout(function(){
+    b.style.animation="";
+    updateHUD();
+  },400);
+}
+
+function toast(txt){
+  var old=document.querySelector(".toast-el");
+  if(old)old.remove();
+  var el=document.createElement("div");
+  el.className="toast-el";
+  el.textContent=txt;
+  document.getElementById("app").appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.remove();},1800);
+}
+
+/* ═══════════════════════════════════════
+   CHARACTER DRAWING
+═══════════════════════════════════════ */
+function drawChar(){
+  var cv=document.getElementById("char-cv");
+  var cx=cv.getContext("2d");
+  cx.clearRect(0,0,130,145);
+  var l=G.lvl;
+
+  var headC=l>=8?"#180000":l>=5?"#140000":"#191919";
+  var eyeC=l>=4?"#ff0022":"#3a3a44";
+  var bodyC=l>=6?"#100000":"#14141a";
+  var bloodA=Math.min(0.2+l*0.09,1);
+  var skinC=l>=3?bodyC:"#191919";
+
+  // Head
+  cx.fillStyle=headC;
+  cx.strokeStyle=l>=5?"#440000":"#2a0000";
+  cx.lineWidth=1.5;
+  cx.beginPath();cx.arc(65,34,26,0,Math.PI*2);cx.fill();cx.stroke();
+
+  // Aura
+  if(l>=5){
+    cx.strokeStyle="rgba(180,0,0,"+(0.15+l*0.03)+")";
+    cx.lineWidth=0.5;cx.setLineDash([2,4]);
+    cx.beginPath();cx.arc(65,34,33,0,Math.PI*2);cx.stroke();cx.setLineDash([]);
+  }
+  if(l>=8){
+    cx.fillStyle="rgba(200,0,0,0.1)";
+    cx.beginPath();cx.arc(65,34,40,0,Math.PI*2);cx.fill();
+  }
+
+  // Eyes
+  if(l>=4){
+    cx.fillStyle=eyeC;
+    cx.beginPath();cx.arc(55,30,5,0,Math.PI*2);cx.fill();
+    cx.beginPath();cx.arc(75,30,5,0,Math.PI*2);cx.fill();
+    if(l>=7){
+      cx.fillStyle="rgba(255,100,0,0.5)";
+      cx.beginPath();cx.arc(55,30,8,0,Math.PI*2);cx.fill();
+      cx.beginPath();cx.arc(75,30,8,0,Math.PI*2);cx.fill();
+    }
+  } else {
+    cx.fillStyle="#2a2a33";
+    cx.fillRect(52,27,9,5);cx.fillRect(69,27,9,5);
+  }
+
+  // Mouth
+  cx.strokeStyle=l>=7?"#ff0011":l>=4?"#880000":"#333";
+  cx.lineWidth=1.5;
+  cx.beginPath();
+  if(l>=9){cx.moveTo(52,44);cx.lineTo(78,44);}
+  else if(l>=6){cx.moveTo(52,45);cx.quadraticCurveTo(65,37,78,45);}
+  else if(l>=3){cx.moveTo(55,46);cx.lineTo(75,46);}
+  else{cx.arc(65,49,7,Math.PI,0);}
+  cx.stroke();
+
+  // Body
+  cx.fillStyle=bodyC;cx.strokeStyle="#1a0000";cx.lineWidth=1;
+  cx.beginPath();cx.roundRect(38,62,54,50,5);cx.fill();cx.stroke();
+  cx.fillStyle=l>=5?"#550000":"#220033";cx.font="6px Courier New";cx.textAlign="center";
+  cx.fillText("PAINSPIRE",65,92);
+
+  // Arms
+  cx.fillStyle=skinC;cx.strokeStyle="#1a0000";
+  cx.beginPath();cx.roundRect(23,64,13,34,4);cx.fill();cx.stroke();
+  cx.beginPath();cx.roundRect(94,64,13,34,4);cx.fill();cx.stroke();
+
+  // Blood hands
+  cx.fillStyle="rgba(170,0,30,"+bloodA+")";
+  cx.beginPath();cx.ellipse(29,99,9,6,0,0,Math.PI*2);cx.fill();
+  cx.beginPath();cx.ellipse(101,99,9,6,0,0,Math.PI*2);cx.fill();
+
+  // Legs
+  cx.fillStyle=bodyC;cx.strokeStyle="#1a0000";
+  cx.beginPath();cx.roundRect(44,113,42,32,4);cx.fill();cx.stroke();
+
+  // Feet
+  cx.fillStyle="#111116";cx.strokeStyle="#1a0000";
+  cx.beginPath();cx.roundRect(46,143,12,6,3);cx.fill();cx.stroke();
+  cx.beginPath();cx.roundRect(72,143,12,6,3);cx.fill();cx.stroke();
+
+  // Blood drips at high level
+  if(l>=5){
+    cx.fillStyle="rgba(180,0,0,0.7)";
+    cx.beginPath();cx.ellipse(45,113,3,5,0,0,Math.PI*2);cx.fill();
+    cx.beginPath();cx.ellipse(82,113,3,5,0,0,Math.PI*2);cx.fill();
+  }
+}
+
+/* ═══════════════════════════════════════
+   UPGRADE PAGE
+═══════════════════════════════════════ */
+function buildPassive(){
+  var el=document.getElementById("passive-list");el.innerHTML="";
+  PASSIVE.forEach(function(u){
+    var lv=G.pUpgs[u.id]||0;
+    var max=(lv>=u.maxLvl);
+    var cost=max?0:u.cost(lv);
+    var d=document.createElement("div");d.className="upg-card";
+    d.innerHTML=
+      '<div class="upg-top"><span class="upg-name">'+u.name+'</span><span class="upg-lv">'+lv+'/'+u.maxLvl+'</span></div>'+
+      '<div class="upg-desc">'+u.desc+'</div>'+
+      '<div class="upg-cost">'+(max?"МАКС.":"Ціна: "+fmt(cost)+" болю — "+u.eff(lv))+'</div>'+
+      '<div class="upg-bar-wrap"><div class="upg-bar" style="width:'+(lv/u.maxLvl*100)+'%"></div></div>'+
+      '<button class="upg-btn" '+(max||G.pain<cost?"disabled":"")+" onclick=\"buyP('"+u.id+"')\">"+(max?"✓ ПРИДБАНО":"КУПИТИ")+'</button>';
+    el.appendChild(d);
+  });
+}
+
+function buildLvlUpg(){
+  var el=document.getElementById("lvl-upgrades");el.innerHTML="";
+  LVL_UPG.forEach(function(u){
+    var owned=!!G.lUpgs[u.id];
+    var locked=(G.lvl<u.lvlReq);
+    var d=document.createElement("div");d.className="upg-card";
+    d.innerHTML=
+      '<div class="upg-top"><span class="upg-name">'+u.name+'</span><span class="upg-lv">'+(locked?"🔒 Рів."+u.lvlReq:owned?"✓ Активно":"Рів."+u.lvlReq)+'</span></div>'+
+      '<div class="upg-desc">'+u.desc+'</div>'+
+      '<div class="upg-cost">'+(owned?"Активовано":locked?"Відкривається на рівні "+u.lvlReq:"Безкоштовно — ти досяг рівня!")+'</div>'+
+      '<button class="upg-btn" '+(owned||locked?"disabled":"")+" onclick=\"buyL('"+u.id+"')\">"+(owned?"✓ АКТИВОВАНО":locked?"ЗАБЛОКОВАНО":"АКТИВУВАТИ")+'</button>';
+    el.appendChild(d);
+  });
+}
+
+function buyP(id){
+  var u=PASSIVE.find(function(x){return x.id===id;});if(!u)return;
+  var lv=G.pUpgs[id]||0;if(lv>=u.maxLvl)return;
+  var cost=u.cost(lv);
+  if(G.pain<cost){toast("Мало болю!");return;}
+  G.pain-=cost;G.pUpgs[id]=(lv+1);recalc();buildPassive();updateHUD();save();
+  vibrate(15);
+}
+
+function buyL(id){
+  var u=LVL_UPG.find(function(x){return x.id===id;});
+  if(!u||G.lUpgs[id]||G.lvl<u.lvlReq)return;
+  G.lUpgs[id]=true;recalc();buildLvlUpg();updateHUD();save();
+  toast("+"+u.bonus+" до тапу!");vibrate(25);
+}
+
+/* ═══════════════════════════════════════
+   REWARDS PAGE
+═══════════════════════════════════════ */
+function buildRewards(){
+  var el=document.getElementById("rew-list");el.innerHTML="";
+  REWARDS.forEach(function(r){
+    var done=(G.claimedR.indexOf(r.id)>=0);
+    var can=(G.pain>=r.cost&&!done);
+    var d=document.createElement("div");d.className="rew-card";
+    d.innerHTML=
+      '<div class="rew-title">'+r.title+'</div>'+
+      '<div class="rew-desc">'+r.desc+'</div>'+
+      '<div class="rew-bottom"><span class="rew-cost">'+fmt(r.cost)+' болю</span>'+
+      '<button class="rew-btn" '+(done||!can?"disabled":"")+" onclick=\"claimR('"+r.id+"')\">"+(done?"ОТРИМАНО":"ЗАБРАТИ")+'</button></div>';
+    el.appendChild(d);
+  });
+}
+
+function claimR(id){
+  var r=REWARDS.find(function(x){return x.id===id;});
+  if(!r||G.claimedR.indexOf(id)>=0)return;
+  if(G.pain<r.cost){toast("Мало болю!");return;}
+  G.pain-=r.cost;G.claimedR.push(id);buildRewards();updateHUD();save();
+  toast(r.title+" — ОТРИМАНО!");vibrate([20,10,40]);
+}
+
+function donTON(){
+  // Copy wallet address to clipboard
+  try{navigator.clipboard.writeText("UQALjRzVIoom9Bnnm575XmR1G5VAa5lcPv7aADG07AdQLtt2");}catch(e){}
+  toast("Гаманець скопійовано! Надішли TON і напиши боту @painspire_bot");
+}
+
+/* ═══════════════════════════════════════
+   DAILY PAGE
+═══════════════════════════════════════ */
+function buildDaily(){
+  var grid=document.getElementById("daily-grid");grid.innerHTML="";
+  var today=new Date().toDateString();
+  var claimed=(G.lastClaim===today);
+  DAILY.forEach(function(amt,i){
+    var d=document.createElement("div");
+    var cls="day-box";
+    if(i<G.streak)cls+=" done";
+    else if(i===G.streak)cls+=" today";
+    d.className=cls;
+    d.innerHTML='<div class="day-num">'+(i+1)+'</div><div class="day-amt">+'+fmt(amt)+'</div>';
+    grid.appendChild(d);
+  });
+  var idx=Math.min(G.streak,DAILY.length-1);
+  var txt=(claimed?"Завтра: ":"Сьогодні: ")+'<span style="color:#ff3333">+'+fmt(DAILY[idx])+'</span>';
+  document.getElementById("claim-lbl").innerHTML=txt;
+  document.getElementById("claim-btn").disabled=claimed;
+}
+
+function claimDaily(){
+  var today=new Date().toDateString();
+  if(G.lastClaim===today)return;
+  var idx=Math.min(G.streak,DAILY.length-1);
+  var amt=DAILY[idx];
+  G.pain+=amt;G.streak++;G.lastClaim=today;
+  buildDaily();updateHUD();save();
+  toast("+"+fmt(amt)+" БОЛЮ!");vibrate([20,10,20,10,30]);
+}
+
+/* ═══════════════════════════════════════
+   LEADERBOARD
+═══════════════════════════════════════ */
+function buildLB(){
+  var list=document.getElementById("lb-list");list.innerHTML="";
+  var merged=LB.slice();
+  if(G.user)merged.push({n:G.user,s:G.pain,you:true});
+  merged.sort(function(a,b){return b.s-a.s;});
+  merged.slice(0,10).forEach(function(row,i){
+    var rk=i+1;
+    var rc="lb-rank";
+    if(rk===1)rc+=" r1";else if(rk===2)rc+=" r2";else if(rk===3)rc+=" r3";
+    var ini=(row.n||"?").slice(0,2).toUpperCase();
+    var d=document.createElement("div");d.className="lb-row";
+    d.innerHTML=
+      '<div class="'+rc+'">'+rk+'</div>'+
+      '<div class="lb-av">'+ini+'</div>'+
+      '<div class="lb-name'+(row.you?" lb-you":"")+'">'+row.n+(row.you?" (ти)":"")+'</div>'+
+      '<div class="lb-score">'+fmt(row.s)+'</div>';
+    list.appendChild(d);
+  });
+}
+
+/* ═══════════════════════════════════════
+   ACCOUNT PAGE
+═══════════════════════════════════════ */
+function buildAcc(){
+  var wrap=document.getElementById("acc-content");
+  if(!G.user){
+    wrap.innerHTML='<div style="text-align:center;padding:40px 16px;color:#330000;font-size:13px">Увійди через реєстрацію або Telegram</div>';
+    return;
+  }
+  var name=NAMES[Math.min(G.lvl-1,NAMES.length-1)];
+  wrap.innerHTML=
+    '<div class="acc-card">'+
+    '<div class="acc-row">'+
+    '<div class="acc-av">'+G.user.slice(0,2).toUpperCase()+'</div>'+
+    '<div><div class="acc-name">'+G.user+'</div><div class="acc-sub">УР. '+G.lvl+' · '+name+'</div></div>'+
+    '</div>'+
+    '<div class="acc-stats">'+
+    '<div class="as"><div class="as-l">БОЛЬ</div><div class="as-v">'+fmt(G.pain)+'</div></div>'+
+    '<div class="as"><div class="as-l">СЕРІЯ</div><div class="as-v">'+G.streak+' дн.</div></div>'+
+    '<div class="as"><div class="as-l">ЗА КЛІК</div><div class="as-v">'+G.cpc+'</div></div>'+
+    '<div class="as"><div class="as-l">НАГОРОДИ</div><div class="as-v">'+G.claimedR.length+'</div></div>'+
+    '</div>'+
+    '</div>'+
+    '<button class="logout-btn" onclick="logout()">✕ Вийти з акаунту</button>';
+}
+
+function logout(){G.user=null;save();buildAcc();}
+
+/* ═══════════════════════════════════════
+   REGISTRATION
+═══════════════════════════════════════ */
+function register(){
+  var n=document.getElementById("reg-name").value.trim();
+  var e=document.getElementById("reg-email").value.trim();
+  var p=document.getElementById("reg-pass").value;
+  var msg=document.getElementById("reg-msg");
+  if(!n||!e||!p){msg.innerHTML='<div class="msg-err">Заповни всі поля</div>';return;}
+  if(p.length<6){msg.innerHTML='<div class="msg-err">Пароль мінімум 6 символів</div>';return;}
+  if(!e.includes("@")){msg.innerHTML='<div class="msg-err">Введи правильний email</div>';return;}
+  G.user=n;save();
+  document.getElementById("reg-overlay").style.display="none";
+  updateHUD();
+  toast("Ласкаво просимо, "+n+"! 🩸");
+}
+
+function regTG(){
+  // Try to get user from Telegram WebApp
+  try{
+    var tg=window.Telegram&&window.Telegram.WebApp;
+    if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user){
+      var u=tg.initDataUnsafe.user;
+      G.user=u.first_name||(u.username||"TGUser");
+      save();
+      document.getElementById("reg-overlay").style.display="none";
+      updateHUD();
+      toast("Привіт, "+G.user+"! 🩸");
+      return;
+    }
+  }catch(e){}
+  toast("Відкрий у Telegram: @painspire_bot");
+}
+
+function skipReg(){
+  document.getElementById("reg-overlay").style.display="none";
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════ */
+function nav(page,el){
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll(".nav-item").forEach(function(n){
+    n.classList.remove("on");
+    n.querySelector(".nav-ico").style.color="#2a0000";
+    n.querySelector(".nav-lbl").style.color="#2a0000";
+  });
+  document.getElementById("page-"+page).classList.add("on");
+  el.classList.add("on");
+  el.querySelector(".nav-ico").style.color="#ff3333";
+  el.querySelector(".nav-lbl").style.color="#ff3333";
+  // Scroll to top
+  document.getElementById("scroll-area").scrollTop=0;
+
+  if(page==="upgrade"){buildPassive();buildLvlUpg();}
+  if(page==="daily")buildDaily();
+  if(page==="lb")buildLB();
+  if(page==="rewards")buildRewards();
+  if(page==="acc")buildAcc();
+}
+
+/* ═══════════════════════════════════════
+   BUTTON TOUCH EVENTS
+═══════════════════════════════════════ */
+var btn=document.getElementById("btn-bleed");
+btn.addEventListener("touchstart",function(e){
+  e.preventDefault();
+  bleed(e);
+},{passive:false});
+btn.addEventListener("click",function(e){
+  // Only fire on non-touch to avoid double-fire
+  if(!e.sourceCapabilities||!e.sourceCapabilities.firesTouchEvents){
+    bleed(e);
+  }
+});
+
+/* ═══════════════════════════════════════
+   TIMERS
+═══════════════════════════════════════ */
+// Energy regen
+setInterval(function(){
+  if(G.energy<G.maxE){
+    G.energy=Math.min(G.maxE,G.energy+3);
+    updateHUD();
+  }
+},1000);
+
+// Auto-clicker (passive p1)
+setInterval(function(){
+  if(G.aps>0){
+    G.pain+=G.aps;
+    recalc();
+    updateHUD();
+  }
+},1000);
+
+// Leaderboard refresh
+setInterval(buildLB,8000);
+
+/* ═══════════════════════════════════════
+   TELEGRAM MINI APP INIT
+═══════════════════════════════════════ */
+try{
+  var tg=window.Telegram&&window.Telegram.WebApp;
+  if(tg){
+    tg.ready();
+    tg.expand();
+    // Set color scheme
+    tg.setHeaderColor("#0a0000");
+    tg.setBackgroundColor("#0a0000");
+    // If user already logged in via Telegram
+    if(!G.user&&tg.initDataUnsafe&&tg.initDataUnsafe.user){
+      var tgUser=tg.initDataUnsafe.user;
+      G.user=tgUser.first_name||(tgUser.username||null);
+      if(G.user){save();}
+    }
+  }
+}catch(e){}
+
+/* ═══════════════════════════════════════
+   STARTUP
+═══════════════════════════════════════ */
+load();
+recalc();
+updateHUD();
+drawChar();
+
+// Hide reg overlay if already logged in
+if(G.user){
+  document.getElementById("reg-overlay").style.display="none";
+}
+</script>
+</body>
+</html>
